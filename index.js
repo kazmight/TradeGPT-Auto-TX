@@ -169,9 +169,10 @@ async function checkWalletInfo(wallet, provider, walletAddress) {
 
 async function displayAllWalletInfo(privateKeys, provider) {
     for (const privateKey of privateKeys) {
+        let walletAddress = 'UNKNOWN_WALLET'; // Initialize before try block
         try {
             const wallet = new ethers.Wallet(privateKey, provider);
-            const walletAddress = wallet.address;
+            walletAddress = wallet.address; // Assign inside try block
             const { usdtBalance, usdtDecimals, nativeBalance, pointsData } = await checkWalletInfo(wallet, provider, walletAddress);
 
             logger.info(`Wallet Information for ${walletAddress}:`);
@@ -185,7 +186,7 @@ async function displayAllWalletInfo(privateKeys, provider) {
             }
             console.log('');
         } catch (error) {
-            logger.error(`Failed to display info for wallet: ${error.message}`);
+            logger.error(`Failed to display info for wallet ${walletAddress}: ${error.message}`);
         }
     }
 }
@@ -375,9 +376,11 @@ async function runBot() {
     }
 
     for (const privateKey of privateKeys) {
+        let walletAddress = 'UNKNOWN_WALLET'; // Initialize here, before the try block
         try {
             const wallet = new ethers.Wallet(privateKey, provider);
-            const walletAddress = wallet.address;
+            walletAddress = wallet.address; // Assign inside try
+
             logger.step(`Processing wallet: ${walletAddress}`);
 
             for (let i = 0; i < numPrompts; i++) {
@@ -408,9 +411,10 @@ async function runBot() {
 
     logger.success('Bot execution completed for all wallets. Fetching final points...');
     for (const privateKey of privateKeys) {
+        let walletAddress = 'UNKNOWN_WALLET'; // Also initialize here for the final points loop
         try {
             const wallet = new ethers.Wallet(privateKey, provider);
-            const walletAddress = wallet.address;
+            walletAddress = wallet.address;
             const pointsData = await fetchWalletPoints(walletAddress);
             if (pointsData) {
                 logger.info(`Final Points for ${walletAddress}: Total: ${pointsData.totalPoints} (Mainnet: ${pointsData.mainnetPoints}, Testnet: ${pointsData.testnetPoints}, Social: ${pointsData.socialPoints})`);
