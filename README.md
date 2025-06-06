@@ -6,7 +6,7 @@ An automated bot for interacting with TradeGPT Finance, performing swaps, and ea
 
 - **Multi-wallet support** - Manage multiple wallets from `.env` file
 - **Automated chat interactions** - Random prompts to simulate user activity
-- **Token swapping** - Automated USDT to LOP swaps
+- **Token swapping** - Automated USDT to Random tokens
 - **Points tracking** - Monitor your airdrop points in real-time
 
 ## Prerequisites 📋
