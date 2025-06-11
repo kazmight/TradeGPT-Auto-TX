@@ -2,6 +2,9 @@
 
 An automated bot for interacting with TradeGPT Finance, performing swaps, and earning points on the 0G Testnet.
 
+## Don't forget join telegram channel Dasar Pemulung for Password.
+## Links telegram: https://t.me/dasarpemulung
+
 ## Features ✨
 
 - **Multi-wallet support** - Manage multiple wallets from `.env` file
