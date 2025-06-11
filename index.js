@@ -1,7 +1,7 @@
 require('dotenv').config();
 const axios = require('axios');
 const ethers = require('ethers');
-const prompt = require('prompt-sync')();
+const prompt = require('prompt-sync')(); // prompt-sync is used here, so input will be plain text
 
 const colors = {
     reset: "\x1b[0m",
@@ -17,7 +17,7 @@ const logger = {
     info: (msg) => console.log(`${colors.green}[✅] ${msg}${colors.reset}`),
     warn: (msg) => console.log(`${colors.yellow}[🚫] ${msg}${colors.reset}`),
     error: (msg) => console.log(`${colors.red}[❎] ${msg}${colors.reset}`),
-    success: (msg) => console.log(`${colors.green}[✅] ${msg}${colors.reset}`),
+    success: (msg) => console.log(`${colors.green}[✅] ${msg}${colors.reset}`), // Adjusted for consistency
     loading: (msg) => console.log(`${colors.cyan}[🔁] ${msg}${colors.reset}`),
     step: (msg) => console.log(`${colors.white}[▶] ${msg}${colors.reset}`),
     banner: () => {
@@ -30,7 +30,12 @@ const logger = {
         console.log('░░░╚═╝░░░╚═╝░░╚═╝╚═╝░░╚═╝╚═════╝░╚══════╝░╚═════╝░╚═╝░░░░░░░░╚═╝░░░');
         console.log('\nby Kazmight');
         console.log(`${colors.reset}\n`);
-    }
+    },
+    // Menambahkan pesan password
+    passwordPrompt: (msg) => console.log(`${colors.yellow}[🔒] ${msg}${colors.reset}`),
+    passwordCorrect: (msg) => console.log(`${colors.green}[✅] ${msg}${colors.reset}`),
+    passwordIncorrect: (msg) => console.log(`${colors.red}[❎] ${msg}${colors.reset}`),
+    passwordEnvMissing: (msg) => console.log(`${colors.red}[❎] ${msg}${colors.reset}`),
 };
 
 const getRandomUserAgent = () => {
@@ -191,20 +196,20 @@ async function displayAllWalletInfo(privateKeys, provider) {
     }
 }
 
-async function sendChatRequest(walletAddress, prompt) {
+async function sendChatRequest(walletAddress, promptMessage) { // Renamed 'prompt' to 'promptMessage' to avoid conflict with prompt-sync
     const url = 'https://trade-gpt-800267618745.herokuapp.com/ask/ask';
     const payload = {
         chainId: networkConfig.chainId,
         user: walletAddress,
         questions: [
             {
-                question: prompt,
+                question: promptMessage,
                 answer: '',
                 baseMessage: {
                     lc: 1,
                     type: 'constructor',
                     id: ['langchain_core', 'messages', 'HumanMessage'],
-                    kwargs: { content: prompt, additional_kwargs: {}, response_metadata: {} },
+                    kwargs: { content: promptMessage, additional_kwargs: {}, response_metadata: {} },
                 },
                 type: null,
                 priceHistorical: null,
@@ -217,9 +222,9 @@ async function sendChatRequest(walletAddress, prompt) {
     };
 
     try {
-        logger.loading(`Sending chat request for wallet ${walletAddress}: "${prompt}"`);
+        logger.loading(`Sending chat request for wallet ${walletAddress}: "${promptMessage}"`);
         const response = await axios.post(url, payload, { headers: getHeaders() });
-        logger.info(`Chat request successful for wallet ${walletAddress}: ${prompt}`);
+        logger.info(`Chat request successful for wallet ${walletAddress}: ${promptMessage}`);
         return response.data;
     } catch (error) {
         logger.error(`Chat request failed for wallet ${walletAddress}: ${error.message}`);
@@ -317,7 +322,7 @@ async function performSwap(wallet, provider, amountUSDT, targetTokenSymbol, wall
         logger.info(`Swap successful! Tx Hash: ${networkConfig.explorer}/tx/${tx.hash}`);
 
         const logResponse = await logTransaction(walletAddress, amountUSDT, tx.hash, 'USDT', targetTokenSymbol);
-        logger.success(`Transaction logged successfully: - [✓] "status": "${logResponse.data.status}"`);
+        logger.success(`Transaction logged successfully: - [✅] "status": "${logResponse.data.status}"`); // Updated success message
 
         return receipt;
     } catch (error) {
@@ -358,6 +363,25 @@ async function logTransaction(walletAddress, amountUSDT, txHash, currencyIn, cur
 
 async function runBot() {
     logger.banner();
+
+    // --- FITUR PASSWORD DITAMBAHKAN DI SINI ---
+    const correctPassword = process.env.BOT_PASSWORD;
+    if (!correctPassword) {
+        logger.passwordEnvMissing('Variabel lingkungan BOT_PASSWORD tidak ditemukan. Harap setel sebelum menjalankan skrip.');
+        process.exit(1);
+    }
+
+    logger.passwordPrompt('Enter password:');
+    const enteredPassword = prompt(''); // prompt-sync akan menampilkan teks yang diketik pengguna
+    
+    if (enteredPassword !== correctPassword) {
+        logger.passwordIncorrect('Password salah! Keluar...');
+        process.exit(1);
+    }
+    logger.passwordCorrect('Password benar! Memulai bot...');
+    console.log('\n'); // Tambahkan baris kosong untuk jarak
+    // --- AKHIR FITUR PASSWORD ---
+
 
     const privateKeys = loadPrivateKeys();
     if (privateKeys.length === 0) {
