@@ -407,7 +407,7 @@ async function runBot() {
                 logger.warn(`Skipping wallet ${walletAddress} due to insufficient OG balance (${formattedOG} OG). Need at least 0.001 OG for gas.`);
                 console.log(`\n--- Finished processing wallet ${walletAddress} ---\n`);
                 await new Promise(resolve => setTimeout(resolve, 5000));
-                continue; /
+                continue;
             }
 
             for (let i = 0; i < numPrompts; i++) {
