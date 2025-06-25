@@ -1,7 +1,7 @@
 require('dotenv').config();
 const axios = require('axios');
 const ethers = require('ethers');
-const prompt = require('prompt-sync')(); // prompt-sync is used here, so input will be plain text
+const prompt = require('prompt-sync')();
 
 const colors = {
     reset: "\x1b[0m",
@@ -15,10 +15,10 @@ const colors = {
 
 const logger = {
     info: (msg) => console.log(`${colors.green}[✅] ${msg}${colors.reset}`),
-    warn: (msg) => console.log(`${colors.yellow}[🚫] ${msg}${colors.reset}`),
-    error: (msg) => console.log(`${colors.red}[❎] ${msg}${colors.reset}`),
-    success: (msg) => console.log(`${colors.green}[✅] ${msg}${colors.reset}`), // Adjusted for consistency
-    loading: (msg) => console.log(`${colors.cyan}[🔁] ${msg}${colors.reset}`),
+    warn: (msg) => console.log(`${colors.yellow}[⚠️] ${msg}${colors.reset}`),
+    error: (msg) => console.log(`${colors.red}[❌] ${msg}${colors.reset}`),
+    success: (msg) => console.log(`${colors.green}[🎉] ${msg}${colors.reset}`),
+    loading: (msg) => console.log(`${colors.cyan}[🔄] ${msg}${colors.reset}`),
     step: (msg) => console.log(`${colors.white}[▶] ${msg}${colors.reset}`),
     banner: () => {
         console.log(`${colors.cyan}${colors.bold}`);
@@ -30,12 +30,7 @@ const logger = {
         console.log('░░░╚═╝░░░╚═╝░░╚═╝╚═╝░░╚═╝╚═════╝░╚══════╝░╚═════╝░╚═╝░░░░░░░░╚═╝░░░');
         console.log('\nby Kazmight');
         console.log(`${colors.reset}\n`);
-    },
-    // Menambahkan pesan password
-    passwordPrompt: (msg) => console.log(`${colors.yellow}[🔒] ${msg}${colors.reset}`),
-    passwordCorrect: (msg) => console.log(`${colors.green}[✅] ${msg}${colors.reset}`),
-    passwordIncorrect: (msg) => console.log(`${colors.red}[❎] ${msg}${colors.reset}`),
-    passwordEnvMissing: (msg) => console.log(`${colors.red}[❎] ${msg}${colors.reset}`),
+    }
 };
 
 const getRandomUserAgent = () => {
@@ -52,7 +47,7 @@ const getRandomPrompt = () => {
     const prompts = [
         "What's the value of my portfolio?",
         "What can I do on TradeGPT?",
-        "What is the price of SLJD?",
+        "What is the price of CSYN?", 
         "Perform initial analysis of the users wallet",
         "Can you check my recent transactions?",
         "What are the top tokens to watch today?",
@@ -61,7 +56,7 @@ const getRandomPrompt = () => {
         "Any new trading opportunities?",
         "What are the trending markets today?",
         "Can you suggest a trading strategy?",
-        "What is the price of LOP?",
+        "What is the price of MTP?", 
         "Show me my transaction history",
         "Are there any upcoming airdrops?",
         "What tokens should I hold for the long term?"
@@ -87,42 +82,39 @@ const networkConfig = {
 };
 
 const uniswapRouterAddress = '0xDCd7d05640Be92EC91ceb1c9eA18e88aFf3a6900';
-const usdtAddress = '0xe6c489B6D3eecA451D60cfda4782e9E727490477';
 
-// Define the tokens available for trading on 0G testnet
+const usdtAddress = '0x217C6f12d186697b16dE9e1ae9F85389B93BdB30';
+
+
 const tokens = {
-    NEIZ: '0x5d77d8bd959Bfb48c55E19199df54C7ab23f3e4d',
-    SYY: '0xd0A1EC4b80e32D207bCc77B17cbB5F3132abDE6D',
-    LOP: '0x8B1B701966CfDd5021014bC9C18402b38091b7A8',
-    AEOC: '0x7dAbc660f27084FEF9c69Cd992faB69af7b3d034',
-    AUR: '0x0eEf6D0198D38330c0317e5F6f485244b4e29eE3',
-    FRNU: '0xa9ee01E99d59Fb01B72F5DB9AEDa8b02305DcD69',
-    SHEU: '0x90a165f6A012f192E880365a5b04863450137708',
-    MEIX: '0x8E174BD3d9AeBAf5a65701e9e9D2879FD3B77Ed6',
-    CLSM: '0xBd083A3F30ab27FAF242De03bC32550ed121E719',
-    LAQ: '0x388819E43FDbA9fDcaa945277B185514b6c3bEc5',
-    AGIF: '0x290322DAC0D75B12f6e38b13C5D7cAE3889eF7D7',
-    PRMG: '0x77CB70C4af94cfAF34c3Fa6C6A712F9814F72E12',
-    THY: '0x195872c89Ee481bc00d77A4C3C0d87dAFA97B502',
-    ECBX: '0x96A9cEf99b40BbeD2AE24E354b78F90C78BaAE74',
-    CHN: '0x5Ff6E6cD23B0854998EDA0Ab6BD3DBB645AbC672',
-    YIU: '0x317336E2e9D564a1C0A173bA446bA41c99B0a009',
-    BADE: '0xbD631c902Fd266e3c60056C0f23F41a75F20Ff72',
-    DEAX: '0xA2ad0dD117AFaC54d40d854b8cADC4230571C222',
-    REU: '0x84a6f826730693F09a8B488E90963356fE4e8561',
-    STG: '0x3a0492969230432b473744c666dBeBceCd0c202B',
-    SWR: '0xc40a54Db43a08311025dA04cefa521e5cbe0e82e',
-    DENZ: '0xd65FCF829748b77371766022dCd9839c51FEc87D',
-    TRA: '0x570A4D57C5eb6e755a99E346F44DfAb6dCD3919C',
-    SLJD: '0xfA1bA7E4aD67c1555Bb15CD3d1Ce4523d4D24643',
-    ROYN: '0x5f9A7d510D18dA9D00887c5ad60E5dE8Ba435086'
+    CSYN: '0xd12F4750a60c4B22680264E018Bb1664Ca23aF40',
+    MTP: '0x5506EBd25960Fb30704c2Dc548c3dA7351277eBa',
+    BYTX: '0xE226Ceb3BfE97d416fE099BCA68251238D28C1E5',
+    DRNT: '0x5f9909a75f871320b9A93574bD6589C82291e391',
+    ECHO: '0xEfB05F9D387D5c24967439C3B949b14D1e474983',
+    ZFI: '0x9FbC11391167F113641492bE2b10dFE729ea5063',
+    NVLK: '0xd2229c8CD8e077fb65b60ecBE01B1c436260fCc4',
+    GSWP: '0x42ce92E9C25D22827b97e3b8cBa75bb6F769e8FD',
+    LPMD: '0x38CfB9e43e2c85A30b3da6dA85Dd32D09133203C',
+    NPAY: '0x25F9F6D80BA137481C2E2C50d4Fe0F7586e06cF0',
+    CLYR: '0xB82E4CbbC20B2A3ff52f6B3C7b7d003809149c43',
+    FZRO: '0x0d5C1d9E47F1c871BC22C48A5f32425BdA39DcAa',
+    THPY: '0xC4d03e091E21a069b8BF9FCA254620BCB8CA806a',
+    MCHN: '0x56486F582F55448e58c0321A01A61111CFD99D63',
+    FLOV: '0x8f65e752bD9Bde431808c9D07fa0Cb835acf83CC',
+    GEDG: '0xD79879872f7864f6cDBddA064635CAe9cB25218e',
+    MPTC: '0xC3461CF239bbf520D0853fFB60fa05cdD819C814',
+    DGUR: '0xB8CBCFC5a9bb929122299873E1d75c656c78FC01',
+    GRMS: '0xCA223a007868F3eFd7D61C6F6F87a2Cc3336c123',
+    VCRA: '0xa92b466e00ecc3c569AF97531542E8bBddd870CD'
 };
 
-// Get a list of token symbols (excluding USDT, which is the input token)
+
 const tradeableTokens = Object.keys(tokens);
 
 const uniswapRouterABI = [
     'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] calldata path, address to, uint256 deadline) external returns (uint256[] memory amounts)',
+    'function getAmountsOut(uint256 amountIn, address[] calldata path) view returns (uint256[] memory amounts)'
 ];
 
 const erc20ABI = [
@@ -174,10 +166,10 @@ async function checkWalletInfo(wallet, provider, walletAddress) {
 
 async function displayAllWalletInfo(privateKeys, provider) {
     for (const privateKey of privateKeys) {
-        let walletAddress = 'UNKNOWN_WALLET'; // Initialize before try block
+        let walletAddress = 'UNKNOWN_WALLET';
         try {
             const wallet = new ethers.Wallet(privateKey, provider);
-            walletAddress = wallet.address; // Assign inside try block
+            walletAddress = wallet.address;
             const { usdtBalance, usdtDecimals, nativeBalance, pointsData } = await checkWalletInfo(wallet, provider, walletAddress);
 
             logger.info(`Wallet Information for ${walletAddress}:`);
@@ -196,20 +188,20 @@ async function displayAllWalletInfo(privateKeys, provider) {
     }
 }
 
-async function sendChatRequest(walletAddress, promptMessage) { // Renamed 'prompt' to 'promptMessage' to avoid conflict with prompt-sync
+async function sendChatRequest(walletAddress, prompt) {
     const url = 'https://trade-gpt-800267618745.herokuapp.com/ask/ask';
     const payload = {
         chainId: networkConfig.chainId,
         user: walletAddress,
         questions: [
             {
-                question: promptMessage,
+                question: prompt,
                 answer: '',
                 baseMessage: {
                     lc: 1,
                     type: 'constructor',
                     id: ['langchain_core', 'messages', 'HumanMessage'],
-                    kwargs: { content: promptMessage, additional_kwargs: {}, response_metadata: {} },
+                    kwargs: { content: prompt, additional_kwargs: {}, response_metadata: {} },
                 },
                 type: null,
                 priceHistorical: null,
@@ -222,18 +214,28 @@ async function sendChatRequest(walletAddress, promptMessage) { // Renamed 'promp
     };
 
     try {
-        logger.loading(`Sending chat request for wallet ${walletAddress}: "${promptMessage}"`);
+        logger.loading(`Sending chat request for wallet ${walletAddress}: "${prompt}"`);
         const response = await axios.post(url, payload, { headers: getHeaders() });
-        logger.info(`Chat request successful for wallet ${walletAddress}: ${promptMessage}`);
-        return response.data;
+
+        
+        if (response.headers['content-type'] && response.headers['content-type'].includes('application/json')) {
+            logger.info(`Chat request successful for wallet ${walletAddress}: "${prompt}"`);
+            return response.data;
+        } else {
+            logger.error(`Chat request for wallet ${walletAddress} received non-JSON response. Content-Type: ${response.headers['content-type']}`);
+            logger.error(`Raw response data: ${response.data.substring(0, 500)}...`); 
+            throw new Error('API returned non-JSON response for chat request');
+        }
     } catch (error) {
         logger.error(`Chat request failed for wallet ${walletAddress}: ${error.message}`);
+        if (error.response && error.response.data) {
+            logger.error(`API response data: ${error.response.data.substring(0, 500)}...`);
+        }
         throw error;
     }
 }
 
 async function performSwap(wallet, provider, amountUSDT, targetTokenSymbol, walletAddress) {
-    // Get the target token address from our `tokens` object
     const targetTokenAddress = tokens[targetTokenSymbol];
     if (!targetTokenAddress) {
         throw new Error(`Target token symbol ${targetTokenSymbol} not found in the token list.`);
@@ -244,14 +246,14 @@ async function performSwap(wallet, provider, amountUSDT, targetTokenSymbol, wall
         const amountIn = ethers.parseUnits(amountUSDT.toString(), usdtDecimals);
 
         if (usdtBalance < amountIn) {
-            throw new Error(`Insufficient USDT balance: ${ethers.formatUnits(usdtBalance, usdtDecimals)} USDT`);
+            throw new Error(`Insufficient USDT balance: ${ethers.formatUnits(usdtBalance, usdtDecimals)} USDT. Required: ${amountUSDT} USDT.`);
         }
-        if (nativeBalance < ethers.parseEther('0.001')) { // Ensure sufficient OG for gas
-            throw new Error(`Insufficient OG balance for gas: ${ethers.formatEther(nativeBalance)} OG`);
+        if (nativeBalance < ethers.parseEther('0.001')) { 
+            throw new Error(`Insufficient OG balance for gas: ${ethers.formatEther(nativeBalance)} OG. Required: min 0.001 OG.`);
         }
 
         const path = [usdtAddress, targetTokenAddress];
-        const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from now
+        const deadline = Math.floor(Date.now() / 1000) + 60 * 20; 
 
         const url = 'https://trade-gpt-800267618745.herokuapp.com/ask/ask';
         const payload = {
@@ -279,42 +281,45 @@ async function performSwap(wallet, provider, amountUSDT, targetTokenSymbol, wall
 
         logger.loading(`Fetching swap details for ${amountUSDT} USDT to ${targetTokenSymbol}`);
         const response = await axios.post(url, payload, { headers: getHeaders() });
-        const swapData = JSON.parse(response.data.questions[0].answer[0].content);
 
-        if (!swapData.amountOutMin) {
-            throw new Error('Invalid swap data: amountOutMin is undefined from TradeGPT response');
+        let swapData;
+        try {
+            
+            swapData = JSON.parse(response.data.questions[0].answer[0].content);
+        } catch (jsonError) {
+            
+            logger.error(`API response content for swap details is not valid JSON. Error: ${jsonError.message}`);
+            logger.error(`Raw response content: ${response.data.questions[0].answer[0].content.substring(0, 500)}...`);
+            throw new Error("Failed to parse swap details from TradeGPT API. Response was not valid JSON. Check raw content for API error messages.");
+        }
+        
+        if (!swapData || !swapData.amountOutMin) {
+            logger.error(`Invalid swap data received from TradeGPT: ${JSON.stringify(swapData)}`);
+            throw new Error('Invalid swap data: amountOutMin is undefined or missing from TradeGPT response');
         }
 
-        // It's crucial here to get the decimals of the target token to parse amountOutMin correctly.
-        // For simplicity and assuming most tokens on this testnet might have 18 decimals,
-        // we'll default to 18. If a token has different decimals, this will need to be fetched
-        // dynamically (e.g., by creating an Ethers.Contract instance for the target token
-        // and calling `decimals()`).
-        // For now, let's assume 18 decimals for the output token unless specified.
-        let targetTokenDecimals = 18;
-        // You would typically fetch this:
-        // const targetTokenContract = new ethers.Contract(targetTokenAddress, erc20ABI, provider);
-        // targetTokenDecimals = await targetTokenContract.decimals();
-
+        
+        const targetTokenContract = new ethers.Contract(targetTokenAddress, erc20ABI, provider);
+        const targetTokenDecimals = await targetTokenContract.decimals();
+        
         const amountOutMin = ethers.parseUnits(swapData.amountOutMin.toString(), targetTokenDecimals);
 
         const usdtContract = new ethers.Contract(usdtAddress, erc20ABI, wallet);
         logger.loading(`Approving USDT for Uniswap Router for wallet ${walletAddress}`);
-        // Ensure to set a gas limit for approval, or let Ethers estimate.
-        // A hardcoded limit (like 100000) might fail if actual gas is higher.
-        const approveTx = await usdtContract.approve(uniswapRouterAddress, amountIn, { gasLimit: 100000 });
+        
+        const approveTx = await usdtContract.approve(uniswapRouterAddress, amountIn); 
         await approveTx.wait();
-        logger.info(`USDT approval successful for wallet ${walletAddress}`);
+        logger.info(`USDT approval successful for wallet ${walletAddress}. Tx Hash: ${networkConfig.explorer}/tx/${approveTx.hash}`);
 
         const router = new ethers.Contract(uniswapRouterAddress, uniswapRouterABI, wallet);
         logger.loading(`Initiating swap of ${amountUSDT} USDT to ${targetTokenSymbol} for wallet ${walletAddress}`);
+        
         const tx = await router.swapExactTokensForTokens(
             amountIn,
             amountOutMin,
             path,
             walletAddress,
-            deadline,
-            { gasLimit: 200000 } // Set a reasonable gas limit for the swap
+            deadline
         );
 
         logger.loading(`Waiting for transaction confirmation: ${tx.hash}`);
@@ -322,7 +327,7 @@ async function performSwap(wallet, provider, amountUSDT, targetTokenSymbol, wall
         logger.info(`Swap successful! Tx Hash: ${networkConfig.explorer}/tx/${tx.hash}`);
 
         const logResponse = await logTransaction(walletAddress, amountUSDT, tx.hash, 'USDT', targetTokenSymbol);
-        logger.success(`Transaction logged successfully: - [✅] "status": "${logResponse.data.status}"`); // Updated success message
+        logger.success(`Transaction logged successfully: - [🎉] "status": "${logResponse.data.status}"`);
 
         return receipt;
     } catch (error) {
@@ -333,7 +338,6 @@ async function performSwap(wallet, provider, amountUSDT, targetTokenSymbol, wall
         if (error.receipt) {
             logger.error(`Receipt details: ${JSON.stringify(error.receipt, null, 2)}`);
         }
-        throw error;
     }
 }
 
@@ -344,7 +348,7 @@ async function logTransaction(walletAddress, amountUSDT, txHash, currencyIn, cur
         chainId: networkConfig.chainId,
         txHash,
         amount: amountUSDT.toString(),
-        usdValue: amountUSDT, // Assuming USDT value is 1:1 with USD for logging
+        usdValue: amountUSDT, 
         currencyIn: currencyIn,
         currencyOut: currencyOut,
         timestamp: Date.now(),
@@ -364,25 +368,6 @@ async function logTransaction(walletAddress, amountUSDT, txHash, currencyIn, cur
 async function runBot() {
     logger.banner();
 
-    // --- FITUR PASSWORD DITAMBAHKAN DI SINI ---
-    const correctPassword = process.env.BOT_PASSWORD;
-    if (!correctPassword) {
-        logger.passwordEnvMissing('Variabel lingkungan BOT_PASSWORD tidak ditemukan. Harap setel sebelum menjalankan skrip.');
-        process.exit(1);
-    }
-
-    logger.passwordPrompt('Enter password:');
-    const enteredPassword = prompt(''); // prompt-sync akan menampilkan teks yang diketik pengguna
-    
-    if (enteredPassword !== correctPassword) {
-        logger.passwordIncorrect('Password salah! Keluar...');
-        process.exit(1);
-    }
-    logger.passwordCorrect('Password benar! Memulai bot...');
-    console.log('\n'); // Tambahkan baris kosong untuk jarak
-    // --- AKHIR FITUR PASSWORD ---
-
-
     const privateKeys = loadPrivateKeys();
     if (privateKeys.length === 0) {
         logger.warn('No private keys found in .env file. Exiting...');
@@ -400,42 +385,69 @@ async function runBot() {
     }
 
     for (const privateKey of privateKeys) {
-        let walletAddress = 'UNKNOWN_WALLET'; // Initialize here, before the try block
+        let walletAddress = 'UNKNOWN_WALLET';
         try {
             const wallet = new ethers.Wallet(privateKey, provider);
-            walletAddress = wallet.address; // Assign inside try
+            walletAddress = wallet.address;
 
             logger.step(`Processing wallet: ${walletAddress}`);
 
+            
+            const { usdtBalance: currentUsdtBalance, usdtDecimals, nativeBalance: currentNativeBalance } = await checkWalletInfo(wallet, provider, walletAddress);
+            const formattedUSDT = parseFloat(ethers.formatUnits(currentUsdtBalance, usdtDecimals));
+            const formattedOG = parseFloat(ethers.formatEther(currentNativeBalance));
+
+            if (formattedUSDT < 1.0) { 
+                logger.warn(`Skipping wallet ${walletAddress} due to insufficient USDT balance (${formattedUSDT} USDT). Need at least 1 USDT for swaps.`);
+                console.log(`\n--- Finished processing wallet ${walletAddress} ---\n`);
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                continue; 
+            }
+            if (formattedOG < 0.001) { 
+                logger.warn(`Skipping wallet ${walletAddress} due to insufficient OG balance (${formattedOG} OG). Need at least 0.001 OG for gas.`);
+                console.log(`\n--- Finished processing wallet ${walletAddress} ---\n`);
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                continue; /
+            }
+
             for (let i = 0; i < numPrompts; i++) {
-                // Pick a random chat prompt
-                const randomPrompt = getRandomPrompt();
-                await sendChatRequest(walletAddress, randomPrompt);
-                await new Promise(resolve => setTimeout(resolve, 3000)); // Small delay after chat
+                try {
+                    
+                    const randomPrompt = getRandomPrompt();
+                    await sendChatRequest(walletAddress, randomPrompt);
+                    await new Promise(resolve => setTimeout(resolve, 3000)); 
 
-                // Pick a random target token for the swap
-                const randomTargetTokenSymbol = tradeableTokens[Math.floor(Math.random() * tradeableTokens.length)];
-                const randomAmount = (Math.random() * (1 - 0.1) + 0.1).toFixed(6); // Random amount between 0.1 and 1 USDT
+                    
+                    const randomTargetTokenSymbol = tradeableTokens[Math.floor(Math.random() * tradeableTokens.length)];
+                    
+                    const randomAmount = (Math.random() * (1 - 0.1) + 0.1).toFixed(6);
 
-                const swapPrompt = `Swap ${randomAmount} USDT to ${randomTargetTokenSymbol}`;
-                await sendChatRequest(walletAddress, swapPrompt);
-                await new Promise(resolve => setTimeout(resolve, 3000)); // Small delay after chat
+                    
+                    const swapPrompt = `Swap ${randomAmount} USDT to ${randomTargetTokenSymbol}`;
+                    await sendChatRequest(walletAddress, swapPrompt);
+                    await new Promise(resolve => setTimeout(resolve, 3000)); 
 
-                await performSwap(wallet, provider, randomAmount, randomTargetTokenSymbol, walletAddress);
+                    
+                    await performSwap(wallet, provider, parseFloat(randomAmount), randomTargetTokenSymbol, walletAddress);
 
-                logger.info(`Completed action set ${i + 1}/${numPrompts} for wallet ${walletAddress}.`);
-                await new Promise(resolve => setTimeout(resolve, 5000)); // Longer delay between full cycles
+                    logger.info(`Completed action set ${i + 1}/${numPrompts} for wallet ${walletAddress}.`);
+                    await new Promise(resolve => setTimeout(resolve, 5000)); 
+                } catch (innerError) {
+                    logger.error(`Error during action set ${i + 1}/${numPrompts} for wallet ${walletAddress}: ${innerError.message}`);
+                    
+                    await new Promise(resolve => setTimeout(resolve, 5000)); 
+                }
             }
         } catch (error) {
-            logger.error(`Error processing wallet ${walletAddress}: ${error.message}`);
+            logger.error(`Fatal error processing wallet ${walletAddress}: ${error.message}`);
         }
         console.log(`\n--- Finished processing wallet ${walletAddress} ---\n`);
-        await new Promise(resolve => setTimeout(resolve, 10000)); // Longer delay between wallets
+        await new Promise(resolve => setTimeout(resolve, 10000)); 
     }
 
     logger.success('Bot execution completed for all wallets. Fetching final points...');
     for (const privateKey of privateKeys) {
-        let walletAddress = 'UNKNOWN_WALLET'; // Also initialize here for the final points loop
+        let walletAddress = 'UNKNOWN_WALLET';
         try {
             const wallet = new ethers.Wallet(privateKey, provider);
             walletAddress = wallet.address;
